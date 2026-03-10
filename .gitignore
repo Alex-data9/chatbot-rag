@@ -1,0 +1,27 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Variáveis de ambiente
+.env
+
+# Dados locais (PDFs e vectorstore gerados localmente)
+backend/data/pdfs/
+backend/data/vectorstore/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
