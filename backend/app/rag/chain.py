@@ -22,7 +22,8 @@ def _build_llm(streaming: bool = False) -> ChatOpenAI:
     return ChatOpenAI(
         model=settings.llm_model,
         temperature=0.7,
-        api_key=settings.openai_api_key,
+        api_key=settings.deepseek_api_key,
+        base_url=settings.deepseek_base_url,
         streaming=streaming,
     )
 

@@ -2,8 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # OpenAI
-    openai_api_key: str
+    # DeepSeek (compatível com OpenAI)
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
 
     # Supabase (opcional na fase inicial)
     supabase_url: str = ""
@@ -31,7 +32,7 @@ class Settings(BaseSettings):
     retriever_k: int = 4
 
     # Modelos
-    llm_model: str = "gpt-4o-mini"
+    llm_model: str = "deepseek-chat"
     embedding_model: str = "text-embedding-3-small"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
