@@ -2,12 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # DeepSeek (compatível com OpenAI) — usado para LLM / chat
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-
-    # OpenAI — usado exclusivamente para embeddings (text-embedding-3-small)
-    openai_api_key: str = ""
+    # Groq — LLM para chat e resumos (gratuito)
+    groq_api_key: str = ""
 
     # Supabase (opcional na fase inicial)
     supabase_url: str = ""
@@ -35,8 +31,9 @@ class Settings(BaseSettings):
     retriever_k: int = 4
 
     # Modelos
-    llm_model: str = "deepseek-chat"
-    embedding_model: str = "text-embedding-3-small"
+    llm_model: str = "llama-3.3-70b-versatile"
+    # Embeddings rodam localmente via sentence-transformers (sem API key)
+    embedding_model: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

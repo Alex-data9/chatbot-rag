@@ -189,8 +189,8 @@ with gr.Blocks(
             ### Stack Técnica
             | Componente | Tecnologia |
             |------------|------------|
-            | LLM (chat) | DeepSeek Chat |
-            | Embeddings | OpenAI text-embedding-3-small |
+            | LLM (chat) | Groq · Llama 3.3 70B (gratuito) |
+            | Embeddings | sentence-transformers · paraphrase-multilingual-mpnet-base-v2 (local, gratuito) |
             | Vectorstore | ChromaDB (local) |
             | RAG framework | LangChain |
             | Interface demo | Gradio / Hugging Face Spaces |
@@ -221,11 +221,11 @@ with gr.Blocks(
             ---
 
             ### Configuração no HF Space
-            Em **Settings → Variables and secrets**, adicione:
+            Em **Settings → Variables and secrets**, adicione apenas:
             ```
-            DEEPSEEK_API_KEY   = sk-...   (LLM)
-            OPENAI_API_KEY     = sk-...   (Embeddings)
+            GROQ_API_KEY = gsk_...   (LLM — obtenha grátis em console.groq.com)
             ```
+            Os embeddings rodam **localmente** no Space — nenhuma outra chave necessária.
             """
         )
 

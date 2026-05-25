@@ -2,28 +2,26 @@
 RAG Chain conversacional:
   - Recupera chunks relevantes do vectorstore para cada mensagem
   - Injeta o contexto + histórico no prompt
-  - Gera a resposta via GPT-4o-mini
+  - Gera a resposta via Groq (Llama 3.3 70B)
   - Mantém histórico da conversa em memória (por sessão)
 """
 from typing import AsyncIterator
 
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_chroma import Chroma
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 
 from app.config import settings
 from app.agent.prompts import get_chat_prompt
 from app.rag.retriever import get_retriever, format_retrieved_docs
 
 
-def _build_llm(streaming: bool = False) -> ChatOpenAI:
-    return ChatOpenAI(
+def _build_llm(streaming: bool = False) -> ChatGroq:
+    return ChatGroq(
         model=settings.llm_model,
         temperature=0.7,
-        api_key=settings.deepseek_api_key,
-        base_url=settings.deepseek_base_url,
+        api_key=settings.groq_api_key,
         streaming=streaming,
     )
 
@@ -72,12 +70,7 @@ class RAGChain:
             | StrOutputParser()
         )
 
-    # ------------------------------------------------------------------
-    # Invocação síncrona
-    # ------------------------------------------------------------------
-
     def invoke(self, user_message: str) -> str:
-        """Processa uma mensagem e retorna a resposta completa."""
         response = self._chain.invoke({
             "input": user_message,
             "history": self.history,
@@ -85,12 +78,7 @@ class RAGChain:
         self._update_history(user_message, response)
         return response
 
-    # ------------------------------------------------------------------
-    # Invocação assíncrona com streaming (SSE / WebSocket)
-    # ------------------------------------------------------------------
-
     async def stream(self, user_message: str) -> AsyncIterator[str]:
-        """Gera a resposta token a token (generator assíncrono)."""
         full_response = ""
         async for chunk in self._chain_stream.astream({
             "input": user_message,
@@ -100,38 +88,24 @@ class RAGChain:
             yield chunk
         self._update_history(user_message, full_response)
 
-    # ------------------------------------------------------------------
-    # Histórico
-    # ------------------------------------------------------------------
-
     def _update_history(self, user_message: str, ai_response: str) -> None:
         self.history.append(HumanMessage(content=user_message))
         self.history.append(AIMessage(content=ai_response))
 
     def reset(self) -> None:
-        """Limpa o histórico da sessão."""
         self.history = []
 
     def get_history(self) -> list:
         return self.history
 
     def history_as_text(self) -> str:
-        """Retorna o histórico formatado como texto (para gerar resumo via LLM)."""
         lines = []
         for msg in self.history:
             role = "Usuário" if isinstance(msg, HumanMessage) else "Agente"
             lines.append(f"{role}: {msg.content}")
         return "\n".join(lines)
 
-    # ------------------------------------------------------------------
-    # Geração de resumo da conversa (para relatório por email)
-    # ------------------------------------------------------------------
-
     def generate_summary(self) -> str:
-        """
-        Usa o LLM para resumir a conversa em 3-5 frases focadas em:
-        interesse do lead, curso discutido, objeções e próximos passos.
-        """
         if not self.history:
             return "Conversa sem histórico."
 
