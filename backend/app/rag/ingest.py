@@ -5,6 +5,7 @@ Pipeline de ingestão de PDFs:
   3. Gera embeddings localmente via sentence-transformers (sem API key)
   4. Persiste no ChromaDB
 """
+import shutil
 from pathlib import Path
 
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
@@ -76,7 +77,11 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
 
 
 def create_vectorstore(chunks: list) -> Chroma:
-    Path(settings.vectorstore_dir).mkdir(parents=True, exist_ok=True)
+    vs_path = Path(settings.vectorstore_dir)
+    # Apaga o vectorstore anterior para evitar acúmulo de chunks duplicados
+    if vs_path.exists():
+        shutil.rmtree(vs_path)
+    vs_path.mkdir(parents=True, exist_ok=True)
 
     embeddings = _get_embeddings()
     vectorstore = Chroma.from_documents(
