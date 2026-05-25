@@ -2,9 +2,12 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # DeepSeek (compatível com OpenAI)
+    # DeepSeek (compatível com OpenAI) — usado para LLM / chat
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
+
+    # OpenAI — usado exclusivamente para embeddings (text-embedding-3-small)
+    openai_api_key: str = ""
 
     # Supabase (opcional na fase inicial)
     supabase_url: str = ""
