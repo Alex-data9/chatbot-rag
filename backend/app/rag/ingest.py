@@ -5,10 +5,7 @@ Pipeline de ingestão de PDFs:
   3. Gera embeddings localmente via sentence-transformers (sem API key)
   4. Persiste no ChromaDB
 """
-import shutil
 from pathlib import Path
-
-import chromadb
 
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -79,25 +76,16 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
 
 
 def create_vectorstore(chunks: list) -> Chroma:
-    vs_path = Path(settings.vectorstore_dir)
-    vs_path.mkdir(parents=True, exist_ok=True)
-
-    # Deleta a coleção via API do ChromaDB para evitar acúmulo de chunks.
-    # Usar shutil.rmtree causava "readonly database" porque o SQLite ficava com lock aberto.
-    try:
-        client = chromadb.PersistentClient(path=str(vs_path))
-        client.delete_collection("chatbot_rag")
-    except ValueError:
-        pass  # coleção ainda não existia
+    Path(settings.vectorstore_dir).mkdir(parents=True, exist_ok=True)
 
     embeddings = _get_embeddings()
     vectorstore = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=str(vs_path),
+        persist_directory=settings.vectorstore_dir,
         collection_name="chatbot_rag",
     )
-    print(f"[ingest] Vectorstore salvo em: {vs_path} — {len(chunks)} chunks")
+    print(f"[ingest] Vectorstore salvo em: {settings.vectorstore_dir}")
     return vectorstore
 
 
