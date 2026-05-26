@@ -8,6 +8,8 @@ Pipeline de ingestão de PDFs:
 import shutil
 from pathlib import Path
 
+import chromadb
+
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -78,19 +80,24 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
 
 def create_vectorstore(chunks: list) -> Chroma:
     vs_path = Path(settings.vectorstore_dir)
-    # Apaga o vectorstore anterior para evitar acúmulo de chunks duplicados
-    if vs_path.exists():
-        shutil.rmtree(vs_path)
     vs_path.mkdir(parents=True, exist_ok=True)
+
+    # Deleta a coleção via API do ChromaDB para evitar acúmulo de chunks.
+    # Usar shutil.rmtree causava "readonly database" porque o SQLite ficava com lock aberto.
+    try:
+        client = chromadb.PersistentClient(path=str(vs_path))
+        client.delete_collection("chatbot_rag")
+    except ValueError:
+        pass  # coleção ainda não existia
 
     embeddings = _get_embeddings()
     vectorstore = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=settings.vectorstore_dir,
+        persist_directory=str(vs_path),
         collection_name="chatbot_rag",
     )
-    print(f"[ingest] Vectorstore salvo em: {settings.vectorstore_dir}")
+    print(f"[ingest] Vectorstore salvo em: {vs_path} — {len(chunks)} chunks")
     return vectorstore
 
 
