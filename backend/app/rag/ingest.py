@@ -2,14 +2,14 @@
 Pipeline de ingestão de PDFs:
   1. Carrega todos os PDFs do diretório
   2. Divide em chunks com overlap
-  3. Gera embeddings via OpenAI
+  3. Gera embeddings localmente via sentence-transformers (sem API key)
   4. Persiste no ChromaDB
 """
 from pathlib import Path
 
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
 from app.config import settings
@@ -33,7 +33,6 @@ def load_pdfs(pdf_dir: str) -> list:
     )
     documents = loader.load()
 
-    # Adiciona metadado de arquivo de origem a cada chunk
     for doc in documents:
         source = Path(doc.metadata.get("source", ""))
         doc.metadata["file_name"] = source.name
@@ -44,7 +43,6 @@ def load_pdfs(pdf_dir: str) -> list:
 
 
 def _detect_category(file_name: str) -> str:
-    """Infere a categoria do PDF pelo nome do arquivo."""
     name = file_name.lower()
     if "institucional" in name:
         return "institucional"
@@ -58,7 +56,6 @@ def _detect_category(file_name: str) -> str:
 
 
 def split_documents(documents: list) -> list:
-    """Divide os documentos em chunks com sobreposição para melhor contexto."""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
@@ -69,15 +66,16 @@ def split_documents(documents: list) -> list:
     return chunks
 
 
-def _get_embeddings() -> OpenAIEmbeddings:
-    return OpenAIEmbeddings(
-        model=settings.embedding_model,
-        api_key=settings.openai_api_key,
+def _get_embeddings() -> HuggingFaceEmbeddings:
+    # Roda localmente — sem API key, sem custo. Modelo multilíngue com suporte a PT-BR.
+    return HuggingFaceEmbeddings(
+        model_name=settings.embedding_model,
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True},
     )
 
 
 def create_vectorstore(chunks: list) -> Chroma:
-    """Cria e persiste o vectorstore no ChromaDB."""
     Path(settings.vectorstore_dir).mkdir(parents=True, exist_ok=True)
 
     embeddings = _get_embeddings()
@@ -92,7 +90,6 @@ def create_vectorstore(chunks: list) -> Chroma:
 
 
 def load_vectorstore() -> Chroma:
-    """Carrega um vectorstore já existente do disco."""
     embeddings = _get_embeddings()
     vectorstore = Chroma(
         persist_directory=settings.vectorstore_dir,
@@ -105,7 +102,6 @@ def load_vectorstore() -> Chroma:
 
 
 def vectorstore_exists() -> bool:
-    """Verifica se já existe um vectorstore persistido."""
     vs_path = Path(settings.vectorstore_dir)
     return vs_path.exists() and any(vs_path.iterdir())
 

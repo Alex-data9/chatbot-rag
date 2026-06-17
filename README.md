@@ -1,4 +1,16 @@
-# 🤖 Sofia — Chatbot RAG com DeepSeek + LangChain + FastAPI
+---
+title: Sofia Chatbot RAG
+emoji: 🎓
+colorFrom: purple
+colorTo: blue
+sdk: gradio
+sdk_version: "4.0.0"
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
+# 🤖 Sofia — Chatbot RAG com Groq + LangChain + FastAPI
 
 Um assistente virtual inteligente para atendimento de marketing em instituições de ensino, alimentado por RAG (Retrieval-Augmented Generation) com DeepSeek API, LangChain, ChromaDB e FastAPI.
 
